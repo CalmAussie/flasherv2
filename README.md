@@ -1,6 +1,6 @@
 ## To Start ##
 
-npm install then npm start
+npm install then npm start - this is done in the App.js file after all other edited files are saved
 
 Runs the app in the development mode.
 Open http://localhost:3000 to view it in the browser.

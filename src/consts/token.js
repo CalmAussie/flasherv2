@@ -136,7 +136,7 @@ const tokens = {
         "type": "token",
         "symbol": "AAVE",
         "name": "AAVE Token",
-        "address": "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9",
+        "address": "0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9",
         "decimals": 18
       },
       "link": {

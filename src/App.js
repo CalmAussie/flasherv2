@@ -60,7 +60,7 @@ class App extends Component {
 
   async calculatePrice(){
     const CoinGeckoClient = new CoinGecko();
-    let data = await CoinGeckoClient.coins.markets({"ids" : ["basic-attention-token","binance-usd","dai","ethereum","kyber-network","ethlend","maker","decentraland","havven","true-usd","nusd","usd-coin","tether","wrapped-bitcoin","0x"]});
+    let data = await CoinGeckoClient.coins.markets({"ids" : ["aave","basic-attention-token","binance-usd","dai","enjincoin","ethereum","kyber-network","ethlend","maker","decentraland","republic-protocol","havven","true-usd","nusd","uniswap","usd-coin","tether","wrapped-bitcoin","yearn-finance","0x"]});
     console.log(data);
     let currencyRates = {};
     data.data.forEach(cur => {currencyRates[cur.symbol] = cur.current_price});
@@ -165,9 +165,13 @@ class App extends Component {
           
           const buyResultOneInch = await this.state.dsa.oneInch.getBuyAmount(key, token, amount, 0);
           const buyResultKyber = await this.state.dsa.kyber.getBuyAmount(key, token, amount, 0);
-          if (buyResultOneInch.buyAmt > buyResultKyber.buyAmt) {
+          const buyResultUniswap = await this.state.dsa.uniswap.getBuyAmount(key, token, amount, 0);
+          if (buyResultOneInch.buyAmt > buyResultKyber.buyAmt || buyResultOneInch.buyAmt > buyResultUniswap) {
             console.log("1inch", amount, token, "->", key, buyResultOneInch);
             buyFinal = {"amt": 0.999*buyResultOneInch.buyAmt, "dex": "1inch", "unitAmt": buyResultOneInch.unitAmt};
+          } else if (buyResultUniswap.buyAmt > buyResultOneInch.buyAmt || buyResultUniswap.buyAmt > buyResultKyber.buyAmt) {
+            console.log("Uniswap", amount, token, "->", key, buyResultUniswap);
+            buyFinal = {"amt": 0.999*buyResultUniswap.buyAmt, "dex": "Uniswap", "unitAmt": buyResultUniswap.unitAmt};
           } else {
             console.log("Kyber", amount, token, "->", key, buyResultKyber);
             buyFinal = {"amt": 0.999*buyResultKyber.buyAmt, "dex": "Kyber", "unitAmt": buyResultKyber.unitAmt};
@@ -177,38 +181,18 @@ class App extends Component {
 
           const sellResultOneInch = await this.state.dsa.oneInch.getBuyAmount(token, key, buyFinal.amt, 0);
           const sellResultKyber = await this.state.dsa.kyber.getBuyAmount(token, key, buyFinal.amt, 0);
-          if (sellResultOneInch.buyAmt > sellResultKyber.buyAmt) {
+          const sellResultUniswap = await this.state.dsa.uniswap.getSellAmount(token, key, buyFinal.amt, 0);
+          if (sellResultOneInch.buyAmt > sellResultKyber.buyAmt || sellResultOneInch.buyAmt > sellResultUniswap.buyAmt) {
             console.log("1inch", amount, key, "->", token, sellResultOneInch);
             sellFinal = {"amt": sellResultOneInch.buyAmt, "dex": "1inch", "unitAmt": sellResultOneInch.unitAmt};
+          } else if (sellResultUniswap.buyAmt > sellResultOneInch.buyAmt || sellResultUniswap.buyAmt > sellResultKyber.buyAmt) {
+            console.log("Uniswap", amount, key, "->", token, sellResultUniswap);
+            sellFinal = {"amt": sellResultUniswap.buyAmt, "dex": "Uniswap",  "unitAmt": sellResultUniswap.unitAmt};
           } else {
             console.log("Kyber", amount, key, "->", token, sellResultKyber);
             sellFinal = {"amt": sellResultKyber.buyAmt, "dex": "Kyber",  "unitAmt": sellResultKyber.unitAmt};
           }
-
-          //////////////////////////////////// Buy 1inch or Uniswap ////////////////////////////////////////////////////
-
-          const buyResultUniswap = await this.state.dsa.uniswap.getBuyAmount(key, token, amount, 0);
-          if (buyResultOneInch.buyAmt > buyResultUniswap.buyAmt) {
-            console.log("1inch", amount, token, "->", key, buyResultOneInch);
-            buyFinal = {"amt": 0.999*buyResultOneInch.buyAmt, "dex": "1inch", "unitAmt": buyResultOneInch.unitAmt};
-          } else {
-            console.log("Uniswap", amount, token, "->", key, buyResultUniswap);
-            buyFinal = {"amt": 0.999*buyResultUniswap.buyAmt, "dex": "Uniswap", "unitAmt": buyResultUniswap.unitAmt};
-          }
-
-          //////////////////////////////////// Sell 1inch or Uniswap ///////////////////////////////////////////////////
-
-          const sellResultUniswap = await this.state.dsa.uniswap.getSellAmount(token, key, buyFinal.amt, 0);
-          if (sellResultOneInch.buyAmt > sellResultUniswap.buyAmt) {
-            console.log("1inch", amount, key, "->", token, sellResultOneInch);
-            sellFinal = {"amt": sellResultOneInch.buyAmt, "dex": "1inch", "unitAmt": sellResultOneInch.unitAmt};
-          } else {
-            console.log("Uniswap", amount, key, "->", token, sellResultUniswap);
-            sellFinal = {"amt": sellResultUniswap.buyAmt, "dex": "Uniswap",  "unitAmt": sellResultUniswap.unitAmt};
-          }
-
-          /////////////////////////////////////////////////////////////////////////////////////////////////////////////
-          
+         
           if (sellFinal.amt > amount * 1.001) {
             arbOpps.push({
               "index": index,
@@ -424,17 +408,21 @@ class App extends Component {
           <li>BAT -{" "}{this.state.availableLiquidity.bat ? this.state.availableLiquidity.bat.toFixed(3) : 0}</li>
           <li>BUSD -{" "}{this.state.availableLiquidity.busd ? this.state.availableLiquidity.busd.toFixed(3) : 0}</li>
           <li>DAI -{" "}{this.state.availableLiquidity.dai ? this.state.availableLiquidity.dai.toFixed(3) : 0}</li>
+          <li>ENJ -{" "}{this.state.availableLiquidity.enj ? this.state.availableLiquidity.enj.toFixed(3) : 0}</li>
           <li>ETH -{" "}{this.state.availableLiquidity.eth ? this.state.availableLiquidity.eth.toFixed(3) : 0}</li>
           <li>KNC -{" "}{this.state.availableLiquidity.knc ? this.state.availableLiquidity.knc.toFixed(3) : 0}</li>
           <li>LEND -{" "}{this.state.availableLiquidity.lend ? this.state.availableLiquidity.lend.toFixed(3) : 0}</li>
           <li>MANA -{" "}{this.state.availableLiquidity.mana ? this.state.availableLiquidity.mana.toFixed(3) : 0}</li>
           <li>MKR -{" "}{this.state.availableLiquidity.mkr ? this.state.availableLiquidity.mkr.toFixed(3) : 0}</li>
+          <li>REN -{" "}{this.state.availableLiquidity.ren ? this.state.availableLiquidity.ren.toFixed(3) : 0}</li>
           <li>SNX -{" "}{this.state.availableLiquidity.snx ? this.state.availableLiquidity.snx.toFixed(3) : 0}</li>
           <li>sUSD -{" "}{this.state.availableLiquidity.susd ? this.state.availableLiquidity.susd.toFixed(3) : 0}</li>
           <li>TUSD -{" "}{this.state.availableLiquidity.tusd ? this.state.availableLiquidity.tusd.toFixed(3) : 0}</li>
+          <li>UNI -{" "}{this.state.availableLiquidity.uni ? this.state.availableLiquidity.uni.toFixed(3) : 0}</li>
           <li>USDC -{" "}{this.state.availableLiquidity.usdc ? this.state.availableLiquidity.usdc.toFixed(3) : 0}</li>
           <li>USDT -{" "}{this.state.availableLiquidity.usdt ? this.state.availableLiquidity.usdt.toFixed(3) : 0}</li>
           <li>wBTC -{" "}{this.state.availableLiquidity.wbtc ? this.state.availableLiquidity.wbtc.toFixed(3) : 0}</li>
+          <li>YFI -{" "}{this.state.availableLiquidity.yfi ? this.state.availableLiquidity.yfi.toFixed(3) : 0}</li>
           <li>ZRX -{" "}{this.state.availableLiquidity.zrx ? this.state.availableLiquidity.zrx.toFixed(3) : 0}</li>
         </ul>
         </Col>
@@ -457,17 +445,21 @@ class App extends Component {
                 <Option value="bat">BAT</Option>
                 <Option value="busd">BUSD</Option>
                 <Option value="dai">DAI</Option>
+                <Option value="enj">ENJ</Option>
                 <Option value="eth">ETH</Option>
                 <Option value="knc">KNC</Option>
                 <Option value="lend">LEND</Option>
                 <Option value="mana">MANA</Option>
                 <Option value="mkr">MKR</Option>
+                <Option value="ren">REN</Option>
                 <Option value="susd">sUSD</Option>
                 <Option value="snx">SNX</Option>
                 <Option value="tusd">TUSD</Option>
+                <Option value="uni">UNI</Option>
                 <Option value="usdc">USDC</Option>
                 <Option value="usdt">USDT</Option>
-                <Option value="wbtc">wBTC</Option>              
+                <Option value="wbtc">wBTC</Option>
+                <Option value="yfi">YFI</Option>              
                 <Option value="zrx">ZRX</Option>
               </Select>
             </Form.Item>

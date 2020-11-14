@@ -18,7 +18,7 @@ const providerOptions = {
   walletconnect: {
     package: WalletConnectProvider, // required
     options: {
-      infuraId: "ce54e0ff8ac841ab84b83a5e59cb868d" // required
+      infuraId: "b6393fd1a6a44d2d81e8fee974727a72" // required
     }
   }
 };
@@ -161,38 +161,44 @@ class App extends Component {
           let buyFinal = {};
           let sellFinal = {};
 
-          //////////////////////////////////// Buy 1inch or Kyber ////////////////////////////////////////////////////
+          //////////////////////////////////// Buy 1inch or Kyber or Uniswap ////////////////////////////////////////////////////
+
+          try {
+            const buyResultOneInch = await this.state.dsa.oneInch.getBuyAmount(key, token, amount, 0);
+            const buyResultKyber = await this.state.dsa.kyber.getBuyAmount(key, token, amount, 0);
+            const buyResultUniswap = await this.state.dsa.uniswap.getBuyAmount(key, token, amount, 0);
+            if (buyResultOneInch.buyAmt > buyResultKyber.buyAmt && buyResultOneInch.buyAmt > buyResultUniswap.buyAmt) {
+              console.log("1inch", amount, token, "->", key, buyResultOneInch);
+              buyFinal = {"amt": 0.999*buyResultOneInch.buyAmt, "dex": "1inch", "unitAmt": buyResultOneInch.unitAmt};
+            } else if (buyResultUniswap.buyAmt > buyResultOneInch.buyAmt && buyResultUniswap.buyAmt > buyResultKyber.buyAmt) {
+              console.log("Uniswap", amount, token, "->", key, buyResultUniswap);
+              buyFinal = {"amt": 0.999*buyResultUniswap.buyAmt, "dex": "Uniswap", "unitAmt": buyResultUniswap.unitAmt};
+            } else {
+              console.log("Kyber", amount, token, "->", key, buyResultKyber);
+              buyFinal = {"amt": 0.999*buyResultKyber.buyAmt, "dex": "Kyber", "unitAmt": buyResultKyber.unitAmt};
+            }
+
+          //////////////////////////////////// Sell 1inch or Kyber or Uniswap ////////////////////////////////////////////////////
+
+
+            const sellResultOneInch = await this.state.dsa.oneInch.getBuyAmount(token, key, buyFinal.amt, 0);
+            const sellResultKyber = await this.state.dsa.kyber.getBuyAmount(token, key, buyFinal.amt, 0);
+            const sellResultUniswap = await this.state.dsa.uniswap.getBuyAmount(token, key, buyFinal.amt, 0);
+            if (sellResultOneInch.buyAmt > sellResultKyber.buyAmt && sellResultOneInch.buyAmt > sellResultUniswap.buyAmt) {
+              console.log("1inch", amount, key, "->", token, sellResultOneInch);
+              sellFinal = {"amt": sellResultOneInch.buyAmt, "dex": "1inch", "unitAmt": sellResultOneInch.unitAmt};
+            } else if (sellResultUniswap.buyAmt > sellResultOneInch.buyAmt && sellResultUniswap.buyAmt > sellResultKyber.buyAmt) {
+              console.log("Uniswap", amount, key, "->", token, sellResultUniswap);
+              sellFinal = {"amt": sellResultUniswap.buyAmt, "dex": "Uniswap",  "unitAmt": sellResultUniswap.unitAmt};
+            } else {
+              console.log("Kyber", amount, key, "->", token, sellResultKyber);
+              sellFinal = {"amt": sellResultKyber.buyAmt, "dex": "Kyber",  "unitAmt": sellResultKyber.unitAmt};
+            }
+          } catch (e) {
+            console.log(e);
+          }
           
-          const buyResultOneInch = await this.state.dsa.oneInch.getBuyAmount(key, token, amount, 0);
-          const buyResultKyber = await this.state.dsa.kyber.getBuyAmount(key, token, amount, 0);
-          const buyResultUniswap = await this.state.dsa.uniswap.getBuyAmount(key, token, amount, 0);
-          if (buyResultOneInch.buyAmt > buyResultKyber.buyAmt || buyResultOneInch.buyAmt > buyResultUniswap) {
-            console.log("1inch", amount, token, "->", key, buyResultOneInch);
-            buyFinal = {"amt": 0.999*buyResultOneInch.buyAmt, "dex": "1inch", "unitAmt": buyResultOneInch.unitAmt};
-          } else if (buyResultUniswap.buyAmt > buyResultOneInch.buyAmt || buyResultUniswap.buyAmt > buyResultKyber.buyAmt) {
-            console.log("Uniswap", amount, token, "->", key, buyResultUniswap);
-            buyFinal = {"amt": 0.999*buyResultUniswap.buyAmt, "dex": "Uniswap", "unitAmt": buyResultUniswap.unitAmt};
-          } else {
-            console.log("Kyber", amount, token, "->", key, buyResultKyber);
-            buyFinal = {"amt": 0.999*buyResultKyber.buyAmt, "dex": "Kyber", "unitAmt": buyResultKyber.unitAmt};
-          }
 
-          //////////////////////////////////// Sell 1inch or Kyber ////////////////////////////////////////////////////
-
-          const sellResultOneInch = await this.state.dsa.oneInch.getBuyAmount(token, key, buyFinal.amt, 0);
-          const sellResultKyber = await this.state.dsa.kyber.getBuyAmount(token, key, buyFinal.amt, 0);
-          const sellResultUniswap = await this.state.dsa.uniswap.getSellAmount(token, key, buyFinal.amt, 0);
-          if (sellResultOneInch.buyAmt > sellResultKyber.buyAmt || sellResultOneInch.buyAmt > sellResultUniswap.buyAmt) {
-            console.log("1inch", amount, key, "->", token, sellResultOneInch);
-            sellFinal = {"amt": sellResultOneInch.buyAmt, "dex": "1inch", "unitAmt": sellResultOneInch.unitAmt};
-          } else if (sellResultUniswap.buyAmt > sellResultOneInch.buyAmt || sellResultUniswap.buyAmt > sellResultKyber.buyAmt) {
-            console.log("Uniswap", amount, key, "->", token, sellResultUniswap);
-            sellFinal = {"amt": sellResultUniswap.buyAmt, "dex": "Uniswap",  "unitAmt": sellResultUniswap.unitAmt};
-          } else {
-            console.log("Kyber", amount, key, "->", token, sellResultKyber);
-            sellFinal = {"amt": sellResultKyber.buyAmt, "dex": "Kyber",  "unitAmt": sellResultKyber.unitAmt};
-          }
-         
           if (sellFinal.amt > amount * 1.001) {
             arbOpps.push({
               "index": index,

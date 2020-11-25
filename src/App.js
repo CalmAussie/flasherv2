@@ -175,7 +175,7 @@ class App extends Component {
               buyFinal = {"amt": 0.999*buyResultUniswap.buyAmt, "dex": "Uniswap", "unitAmt": buyResultUniswap.unitAmt};
             } else {
               console.log("Kyber", amount, token, "->", key, buyResultKyber);
-              buyFinal = {"amt": 0.999*buyResultKyber.buyAmt, "dex": "Kyber", "unitAmt": buyResultKyber.unitAmt};
+              buyFinal = {"amt": 0.999*buyResultKyber.buyAmt, "dex": "Kyber", "unitAmt": buyResultKyber.unitAmt};              
             }
 
           //////////////////////////////////// Sell 1inch or Kyber or Uniswap ////////////////////////////////////////////////////

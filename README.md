@@ -1,5 +1,7 @@
 ## To Start ##
 
+Needs Node.js installed prior
+
 npm install then npm start - this is done in the App.js file after all other edited files are saved
 
 Runs the app in the development mode.
@@ -30,3 +32,5 @@ Uniswap - Connector - https://docs.instadapp.io/connectors/uniswap/
 1inch/Uniswap - In progress
 
 Uniswap/Kyber - To do
+
+1inch/Uniswap/Kyber (Triangular arbitrage) - To do. (Not sure where to start to achieve this)
